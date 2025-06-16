@@ -1,0 +1,36 @@
+services:
+  samp:
+    image: rahmanarin29/ldms-samp-custom:latest
+    environment:
+      - COMPID=1
+      - LDMSD_FLAGS=-x sock:10001 -c /root/samp.conf
+    ports:
+      - target: 10001
+        published: 10001
+        mode: host
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.hostname != ${HOST}
+    entrypoint: bash /root/entrypoint.sh
+  agg:
+    image: rahmanarin29/ldms-agg-custom:latest
+    environment:
+      - LDMSD_FLAGS=-x sock:20001 -c /root/agg.conf
+      - COMPID=2
+      - COMPUTE_NODES=${COMPUTE_NODES}
+    depends_on:
+      - samp
+    ports:
+      - target: 20001
+        published: 20001
+        mode: host
+    volumes:
+      - ./storage:/root/storage:rw
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.hostname == ${HOST}
+    entrypoint: bash /root/entrypoint.sh
